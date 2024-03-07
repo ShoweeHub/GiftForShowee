@@ -1,12 +1,16 @@
 #include <LITTLEFS.h>
 #include <ArduinoJson.h>
 #include <WiFi.h>
+#include <pages.h>
+#include <WebServer.h>
+#include <DNSServer.h>
 
 String wifi_ssid = "";
 String wifi_password = "";
 String ap_ssid = "守一Showee的粉丝灯牌";
 String ap_password = "LoveShoweeForever";
-const unsigned long attemptTimeoutMillis = 10000;
+WebServer server(80);
+DNSServer dnsServer;
 
 void reboot(const String &msg = "") {
     Serial.printf("%s%s设备3秒后重启...", msg.c_str(), msg.length() > 0 ? "\n" : "");
@@ -60,7 +64,6 @@ bool loadBaseConfig() {
     File configFile = LittleFS.open("/baseConfig.json", "r");
     if (!configFile) {
         Serial.println("未找到基础配置文件");
-        saveBaseConfig();
         return false;
     }
     String config = configFile.readString();
@@ -122,6 +125,14 @@ bool startSTA() {
     return true;
 }
 
+void startDNSServer() {
+    if (dnsServer.start(53, "*", WiFi.softAPIP())) {
+        Serial.println("DNSServer启动成功");
+    } else {
+        reboot("DNSServer启动失败");
+    }
+}
+
 void startAP() {
     WiFiClass::mode(WIFI_AP);
     if (!WiFi.softAP(ap_ssid.c_str(), ap_password.c_str())) {
@@ -129,6 +140,32 @@ void startAP() {
             reboot("AP模式启动失败, 此错误无法修复");
         }
     }
+    startDNSServer();
+}
+
+void handleBaseConfig() {
+    server.send(200, "text/html", getBaseConfigPageHtml(wifi_ssid, wifi_password, ap_ssid, ap_password));
+}
+
+void handleBaseConfigPost() {
+    JsonDocument doc;
+    doc["code"] = 0;
+    doc["msg"] = "OK";
+    String result;
+    serializeJson(doc, result);
+    server.send(200, "application/json", result);
+}
+
+void handleNotFound() {
+    server.send(200, "text/plain", "Not Found");
+}
+
+void startWebServer() {
+    server.on("/baseConfig", HTTP_GET, handleBaseConfig);
+    server.on("/baseConfig", HTTP_POST, handleBaseConfigPost);
+    server.onNotFound(handleNotFound);
+    server.begin();
+    Serial.println("WebServer已启动");
 }
 
 void setup() {
@@ -141,7 +178,10 @@ void setup() {
     if (!loadBaseConfig() || !startSTA()) {
         startAP();
     }
+    startWebServer();
 }
 
 void loop() {
+    server.handleClient();
+    dnsServer.processNextRequest();
 }
