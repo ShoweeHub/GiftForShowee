@@ -11,6 +11,8 @@ String ap_ssid = "守一Showee的粉丝灯牌";
 String ap_password = "LoveShoweeForever";
 WebServer server(80);
 DNSServer dnsServer;
+bool dnsServerStarted = false;
+bool webServerStarted = false;
 
 void reboot(const String &msg = "") {
     Serial.printf("%s%s设备3秒后重启...", msg.c_str(), msg.length() > 0 ? "\n" : "");
@@ -127,6 +129,7 @@ bool startSTA() {
 
 void startDNSServer() {
     if (dnsServer.start(53, "*", WiFi.softAPIP())) {
+        dnsServerStarted = true;
         Serial.println("DNSServer启动成功");
     } else {
         reboot("DNSServer启动失败");
@@ -148,16 +151,18 @@ void handleBaseConfig() {
 }
 
 void handleBaseConfigPost() {
-    JsonDocument doc;
-    doc["code"] = 0;
-    doc["msg"] = "OK";
-    String result;
-    serializeJson(doc, result);
-    server.send(200, "application/json", result);
+    wifi_ssid = server.arg("wifi_ssid");
+    wifi_password = server.arg("wifi_password");
+    ap_ssid = server.arg("ap_ssid");
+    ap_password = server.arg("ap_password");
+    saveBaseConfig();
+    server.send(200, "application/json", R"({"code":0,"msg":"保存成功"})");
+    reboot("基础配置已保存");
 }
 
 void handleNotFound() {
-    server.send(200, "text/plain", "Not Found");
+    Serial.println("未找到: " + server.uri());
+    server.send(200, "application/json", R"({"code":-1,"msg":"Not Found"})");
 }
 
 void startWebServer() {
@@ -165,7 +170,20 @@ void startWebServer() {
     server.on("/baseConfig", HTTP_POST, handleBaseConfigPost);
     server.onNotFound(handleNotFound);
     server.begin();
+    webServerStarted = true;
     Serial.println("WebServer已启动");
+}
+
+void listenStartAPButtonPressed(__attribute__((unused)) void *pVoid) {
+    while (true) {
+        if (digitalRead(0) == LOW) {
+            Serial.println("按键被按下, 正在启动AP模式...");
+            startAP();
+            break;
+        }
+        vTaskDelay(100 / portTICK_PERIOD_MS);
+    }
+    vTaskDelete(nullptr);
 }
 
 void setup() {
@@ -177,11 +195,17 @@ void setup() {
     WiFi.onEvent(onWiFiEvent);
     if (!loadBaseConfig() || !startSTA()) {
         startAP();
+    } else {
+        xTaskCreate(listenStartAPButtonPressed, "listenStartAPButtonPressed", 4096, nullptr, 1, nullptr);
     }
     startWebServer();
 }
 
 void loop() {
-    server.handleClient();
-    dnsServer.processNextRequest();
+    if (webServerStarted) {
+        server.handleClient();
+    }
+    if (dnsServerStarted) {
+        dnsServer.processNextRequest();
+    }
 }
