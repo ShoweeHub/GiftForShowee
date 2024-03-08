@@ -4,18 +4,21 @@
 #include <pages.h>
 #include <WebServer.h>
 #include <DNSServer.h>
+#include <bilibiliFans.h>
 
 String wifi_ssid = "";
 String wifi_password = "";
 String ap_ssid = "守一Showee的粉丝灯牌";
 String ap_password = "LoveShoweeForever";
+
 WebServer server(80);
 DNSServer dnsServer;
+
 bool dnsServerStarted = false;
 bool webServerStarted = false;
 
 void reboot(const String &msg = "") {
-    Serial.printf("%s%s设备3秒后重启...", msg.c_str(), msg.length() > 0 ? "\n" : "");
+    Serial.printf("%s%s设备3秒后重启...\n", msg.c_str(), msg.length() > 0 ? "\n" : "");
     vTaskDelay(3000 / portTICK_PERIOD_MS);
     ESP.restart();
 }
@@ -102,6 +105,7 @@ void onWiFiEvent(WiFiEvent_t event) {
             break;
         case ARDUINO_EVENT_WIFI_STA_DISCONNECTED:
             Serial.println("未连接到WIFI");
+            WiFi.reconnect();
             break;
         case ARDUINO_EVENT_WIFI_STA_GOT_IP:
             Serial.printf("已获取IP: %s\n", WiFi.localIP().toString().c_str());
@@ -123,7 +127,8 @@ bool startSTA() {
         return false;
     }
     WiFiClass::mode(WIFI_STA);
-    WiFi.begin(wifi_ssid.c_str(), wifi_password.c_str());
+    WiFiClass::hostname(ap_ssid);
+    WiFi.begin(wifi_ssid, wifi_password);
     return true;
 }
 
@@ -138,7 +143,7 @@ void startDNSServer() {
 
 void startAP() {
     WiFiClass::mode(WIFI_AP);
-    if (!WiFi.softAP(ap_ssid.c_str(), ap_password.c_str())) {
+    if (!WiFi.softAP(ap_ssid, ap_password)) {
         if (!WiFi.softAP("守一Showee的粉丝灯牌", "LoveShoweeForever")) {
             reboot("AP模式启动失败, 此错误无法修复");
         }
@@ -197,6 +202,7 @@ void setup() {
         startAP();
     } else {
         xTaskCreate(listenStartAPButtonPressed, "listenStartAPButtonPressed", 4096, nullptr, 1, nullptr);
+        xTaskCreate(bilibiliFans, "bilibiliFans", 4096, nullptr, 1, nullptr);
     }
     startWebServer();
 }
@@ -209,3 +215,4 @@ void loop() {
         dnsServer.processNextRequest();
     }
 }
+//TODO 将文件操作的部分独立出来可以被其他模块使用
