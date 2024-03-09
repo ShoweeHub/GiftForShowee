@@ -1,15 +1,18 @@
 #include <LITTLEFS.h>
 #include <ArduinoJson.h>
 #include <WiFi.h>
-#include <pages.h>
 #include <WebServer.h>
 #include <DNSServer.h>
+#include <configLib.h>
 #include <bilibiliFans.h>
 
-String wifi_ssid = "";
-String wifi_password = "";
-String ap_ssid = "守一Showee的粉丝灯牌";
-String ap_password = "LoveShoweeForever";
+Config baseConfig = Config("base", "基础", {
+        ConfigItem("host_name", "本设备名称", "Showee-PandoraBox", "1~32个字符(字母或数字或_-)", "^[a-zA-Z0-9_\\-]{1,32}$", true, true),
+        ConfigItem("wifi_ssid", "WiFi名称", "", "1~32个字符", "^.{1,32}$", true, false),
+        ConfigItem("wifi_password", "WiFi密码", "", "空或8~64个英文字符", "^$|^[ -~]{8,64}$", false, false),
+        ConfigItem("ap_ssid", "AP名称", "守一Showee的潘多拉魔盒", "1~32个字符", "^.{1,32}$", true, true),
+        ConfigItem("ap_password", "AP密码", "LoveShoweeForever", "空或8~64个英文字符", "^$|^[ -~]{8,64}$", false, false)
+});
 
 WebServer server(80);
 DNSServer dnsServer;
@@ -42,56 +45,6 @@ bool beginLittleFS() {
     return true;
 }
 
-bool saveBaseConfig() {
-    Serial.println("正在保存基础配置...");
-    JsonDocument doc;
-    doc["wifi_ssid"] = wifi_ssid;
-    doc["wifi_password"] = wifi_password;
-    doc["ap_ssid"] = ap_ssid;
-    doc["ap_password"] = ap_password;
-    File configFile = LittleFS.open("/baseConfig.json", "w");
-    if (!configFile) {
-        Serial.println("打开配置文件失败,此错误无法修复");
-        return false;
-    }
-    serializeJson(doc, configFile);
-    configFile.close();
-    Serial.println("基础配置保存成功");
-    return true;
-}
-
-String JsonStringOr(const JsonVariant &v, const String &def, bool notBlank = false) {
-    return v.isNull() || (notBlank && v.as<String>().length() == 0) ? def : v.as<String>();
-}
-
-bool loadBaseConfig() {
-    Serial.println("正在加载基础配置...");
-    File configFile = LittleFS.open("/baseConfig.json", "r");
-    if (!configFile) {
-        Serial.println("未找到基础配置文件");
-        return false;
-    }
-    String config = configFile.readString();
-    configFile.close();
-    Serial.println("基础配置文件内容: " + config);
-    JsonDocument doc;
-    DeserializationError error = deserializeJson(doc, config);
-    if (error) {
-        Serial.println("解析配置文件失败");
-        return false;
-    }
-    wifi_ssid = JsonStringOr(doc["wifi_ssid"], wifi_ssid);
-    wifi_password = JsonStringOr(doc["wifi_password"], wifi_password);
-    ap_ssid = JsonStringOr(doc["ap_ssid"], ap_ssid, true);
-    ap_password = JsonStringOr(doc["ap_password"], ap_password);
-    Serial.println("基础配置加载成功");
-    Serial.printf("wifi_ssid: %s\n", wifi_ssid.c_str());
-    Serial.printf("wifi_password: %s\n", wifi_password.c_str());
-    Serial.printf("ap_ssid: %s\n", ap_ssid.c_str());
-    Serial.printf("ap_password: %s\n", ap_password.c_str());
-    return true;
-}
-
 void onWiFiEvent(WiFiEvent_t event) {
     switch (event) {
         case ARDUINO_EVENT_WIFI_STA_START:
@@ -111,7 +64,7 @@ void onWiFiEvent(WiFiEvent_t event) {
             Serial.printf("已获取IP: %s\n", WiFi.localIP().toString().c_str());
             break;
         case ARDUINO_EVENT_WIFI_AP_START:
-            Serial.printf("AP模式已启动, SSID: %s, 密码: %s\n", ap_ssid.c_str(), ap_password.c_str());
+            Serial.printf("AP模式已启动, SSID: %s, 密码: %s\n", baseConfig["ap_ssid"].c_str(), baseConfig["ap_password"].c_str());
             break;
         case ARDUINO_EVENT_WIFI_AP_STOP:
             Serial.println("AP模式已停止");
@@ -123,12 +76,12 @@ void onWiFiEvent(WiFiEvent_t event) {
 }
 
 bool startSTA() {
-    if (wifi_ssid.length() == 0) {
+    if (baseConfig["wifi_ssid"].length() == 0) {
         return false;
     }
+    WiFiClass::hostname(baseConfig["host_name"]);
     WiFiClass::mode(WIFI_STA);
-    WiFiClass::hostname(ap_ssid);
-    WiFi.begin(wifi_ssid, wifi_password);
+    WiFi.begin(baseConfig["wifi_ssid"], baseConfig["wifi_password"]);
     return true;
 }
 
@@ -143,7 +96,7 @@ void startDNSServer() {
 
 void startAP() {
     WiFiClass::mode(WIFI_AP);
-    if (!WiFi.softAP(ap_ssid, ap_password)) {
+    if (!WiFi.softAP(baseConfig["ap_ssid"], baseConfig["ap_password"])) {
         if (!WiFi.softAP("守一Showee的粉丝灯牌", "LoveShoweeForever")) {
             reboot("AP模式启动失败, 此错误无法修复");
         }
@@ -151,28 +104,26 @@ void startAP() {
     startDNSServer();
 }
 
-void handleBaseConfig() {
-    server.send(200, "text/html", getBaseConfigPageHtml(wifi_ssid, wifi_password, ap_ssid, ap_password));
-}
-
-void handleBaseConfigPost() {
-    wifi_ssid = server.arg("wifi_ssid");
-    wifi_password = server.arg("wifi_password");
-    ap_ssid = server.arg("ap_ssid");
-    ap_password = server.arg("ap_password");
-    saveBaseConfig();
-    server.send(200, "application/json", R"({"code":0,"msg":"保存成功"})");
-    reboot("基础配置已保存");
-}
-
 void handleNotFound() {
     Serial.println("未找到: " + server.uri());
     server.send(200, "application/json", R"({"code":-1,"msg":"Not Found"})");
 }
 
+void ServerHandleConfig(Config &config) {
+    server.on("/" + config.name + "Config", HTTP_GET, [&config]() {
+        server.send(200, "text/html", config.getConfigPageHtml());
+    });
+    server.on("/" + config.name + "Config", HTTP_POST, [&config]() {
+        config.loadConfigFromServerArgs(server);
+        config.saveConfig();
+        server.send(200, "application/json", R"({"code":0,"msg":"保存成功"})");
+        reboot(config.name + "配置已保存");
+    });
+}
+
 void startWebServer() {
-    server.on("/baseConfig", HTTP_GET, handleBaseConfig);
-    server.on("/baseConfig", HTTP_POST, handleBaseConfigPost);
+    ServerHandleConfig(baseConfig);
+    ServerHandleConfig(bilibiliFansConfig);
     server.onNotFound(handleNotFound);
     server.begin();
     webServerStarted = true;
@@ -198,7 +149,7 @@ void setup() {
         reboot("LittleFS 故障");
     }
     WiFi.onEvent(onWiFiEvent);
-    if (!loadBaseConfig() || !startSTA()) {
+    if (!baseConfig.loadConfig() || !startSTA()) {
         startAP();
     } else {
         xTaskCreate(listenStartAPButtonPressed, "listenStartAPButtonPressed", 4096, nullptr, 1, nullptr);
@@ -215,4 +166,3 @@ void loop() {
         dnsServer.processNextRequest();
     }
 }
-//TODO 将文件操作的部分独立出来可以被其他模块使用
