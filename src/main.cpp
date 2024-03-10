@@ -3,12 +3,22 @@
 #include <WiFi.h>
 #include <WebServer.h>
 #include <DNSServer.h>
+#include <FastLED.h>
 #include <configLib.h>
 #include <bilibiliFans.h>
 
 #define LEFT_BUTTON 26
 #define CENTER_BUTTON 16
 #define RIGHT_BUTTON 5
+
+#define LED_NUMBERS 256
+#define LED_PIN 21
+#define LED_TYPE WS2812B
+#define LED_COLOR_ORDER GRB
+
+uint8_t LED_BRIGHTNESS = 8;
+
+CRGB leds[LED_NUMBERS];
 
 Config baseConfig = Config("base", "基础", {
         ConfigItem("host_name", "本设备名称", "Showee-PandoraBox", "1~32个字符(字母或数字或_-)", "^[a-zA-Z0-9_\\-]{1,32}$", true, true),
@@ -134,18 +144,6 @@ void startWebServer() {
     Serial.println("WebServer已启动");
 }
 
-void listenStartAPButtonPressed(__attribute__((unused)) void *pVoid) {
-    pinMode(0, INPUT_PULLUP);
-    while (true) {
-        if (digitalRead(0) == LOW) {
-            Serial.println("按键被按下, 正在启动AP模式...");
-            startAP();
-            break;
-        }
-        vTaskDelay(100 / portTICK_PERIOD_MS);
-    }
-    vTaskDelete(nullptr);
-}
 
 [[noreturn]] void listenButtonsPressed(__attribute__((unused)) void *pVoid) {
     pinMode(LEFT_BUTTON, INPUT_PULLUP);
@@ -168,6 +166,9 @@ void listenStartAPButtonPressed(__attribute__((unused)) void *pVoid) {
 void setup() {
     Serial.begin(115200);
     Serial.println("\n========设备重启========");
+    LEDS.addLeds<LED_TYPE, LED_PIN, LED_COLOR_ORDER>(leds, LED_NUMBERS);
+    LEDS.setBrightness(LED_BRIGHTNESS);
+    LEDS.show();
     if (!beginLittleFS()) {
         reboot("LittleFS 故障");
     }
@@ -175,7 +176,6 @@ void setup() {
     if (!baseConfig.loadConfig() || !startSTA()) {
         startAP();
     } else {
-        xTaskCreate(listenStartAPButtonPressed, "listenStartAPButtonPressed", 4096, nullptr, 1, nullptr);
         xTaskCreate(bilibiliFans, "bilibiliFans", 4096, nullptr, 1, nullptr);
     }
     startWebServer();
