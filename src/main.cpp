@@ -6,6 +6,10 @@
 #include <configLib.h>
 #include <bilibiliFans.h>
 
+#define LEFT_BUTTON 26
+#define CENTER_BUTTON 16
+#define RIGHT_BUTTON 5
+
 Config baseConfig = Config("base", "基础", {
         ConfigItem("host_name", "本设备名称", "Showee-PandoraBox", "1~32个字符(字母或数字或_-)", "^[a-zA-Z0-9_\\-]{1,32}$", true, true),
         ConfigItem("wifi_ssid", "WiFi名称", "", "1~32个字符", "^.{1,32}$", true, false),
@@ -131,6 +135,7 @@ void startWebServer() {
 }
 
 void listenStartAPButtonPressed(__attribute__((unused)) void *pVoid) {
+    pinMode(0, INPUT_PULLUP);
     while (true) {
         if (digitalRead(0) == LOW) {
             Serial.println("按键被按下, 正在启动AP模式...");
@@ -140,6 +145,24 @@ void listenStartAPButtonPressed(__attribute__((unused)) void *pVoid) {
         vTaskDelay(100 / portTICK_PERIOD_MS);
     }
     vTaskDelete(nullptr);
+}
+
+[[noreturn]] void listenButtonsPressed(__attribute__((unused)) void *pVoid) {
+    pinMode(LEFT_BUTTON, INPUT_PULLUP);
+    pinMode(CENTER_BUTTON, INPUT_PULLUP);
+    pinMode(RIGHT_BUTTON, INPUT_PULLUP);
+    while (true) {
+        if (digitalRead(LEFT_BUTTON) == HIGH) {
+            Serial.println("LEFT_BUTTON被按下");
+        }
+        if (digitalRead(CENTER_BUTTON) == LOW) {
+            Serial.println("CENTER_BUTTON被按下");
+        }
+        if (digitalRead(RIGHT_BUTTON) == HIGH) {
+            Serial.println("RIGHT_BUTTON被按下");
+        }
+        vTaskDelay(100 / portTICK_PERIOD_MS);
+    }
 }
 
 void setup() {
