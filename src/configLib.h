@@ -48,10 +48,10 @@ public:
     String alias;
     std::vector<ConfigItem> items;
 
-    Config(const String &name, const String &alias, std::vector<ConfigItem> items) {
+    Config(const String &name, const String &alias, const std::vector<ConfigItem> &items) {
         this->name = name;
         this->alias = alias;
-        this->items = std::move(items);
+        this->items = items;
     }
 
     void loadConfigFromServerArgs(WebServer &server) {
