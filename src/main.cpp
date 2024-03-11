@@ -5,12 +5,12 @@
 #include <DNSServer.h>
 #include <configLib.h>
 #include <ScreenController.h>
+#include <Application.h>
 #include <bilibiliFans.h>
 
 #define LEFT_BUTTON 26
 #define CENTER_BUTTON 16
 #define RIGHT_BUTTON 5
-
 Config baseConfig = Config("base", "基础", {
         ConfigItem("host_name", "本设备名称", "Showee-PandoraBox", "1~32个字符(字母或数字或_-)", "^[a-zA-Z0-9_\\-]{1,32}$", true, true),
         ConfigItem("wifi_ssid", "WiFi名称", "", "1~32个字符", "^.{1,32}$", true, false),
@@ -18,10 +18,9 @@ Config baseConfig = Config("base", "基础", {
         ConfigItem("ap_ssid", "AP名称", "守一Showee的潘多拉魔盒", "1~32个字符", "^.{1,32}$", true, true),
         ConfigItem("ap_password", "AP密码", "LoveShoweeForever", "空或8~64个英文字符", "^$|^[ -~]{8,64}$", false, false)
 });
-
+BilibiliFansApplication bilibiliFansApplication;
 WebServer server(80);
 DNSServer dnsServer;
-
 bool dnsServerStarted = false;
 bool webServerStarted = false;
 
@@ -128,13 +127,14 @@ void ServerHandleConfig(Config &config) {
 
 void startWebServer() {
     ServerHandleConfig(baseConfig);
-    ServerHandleConfig(bilibiliFansConfig);
+    for (auto app: ApplicationController::apps) {
+        ServerHandleConfig(app->config);
+    }
     server.onNotFound(handleNotFound);
     server.begin();
     webServerStarted = true;
     Serial.println("WebServer已启动");
 }
-
 
 [[noreturn]] void listenButtonsPressed(__attribute__((unused)) void *pVoid) {
     pinMode(LEFT_BUTTON, INPUT_PULLUP);
@@ -161,12 +161,11 @@ void setup() {
     if (!beginLittleFS()) {
         reboot("LittleFS 故障");
     }
-    ScreenController::loadConfig();
+    ApplicationController::start();
+    xTaskCreate(listenButtonsPressed, "listenButtonsPressed", 4096, nullptr, 1, nullptr);
     WiFi.onEvent(onWiFiEvent);
     if (!baseConfig.loadConfig() || !startSTA()) {
         startAP();
-    } else {
-        xTaskCreate(bilibiliFans, "bilibiliFans", 4096, nullptr, 1, nullptr);
     }
     startWebServer();
 }

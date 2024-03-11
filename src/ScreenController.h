@@ -4,33 +4,31 @@ class ScreenController {
 private:
     static CRGB leds[256];
     static bool screenOpened;
-    static Config screenConfig;
+    static uint8_t brightness;
 public:
+    typedef struct {
+        uint32_t data[8][32];
+    } ScreenFrame;
+
     static void setup() {
         LEDS.addLeds<WS2812B, 21, GRB>(leds, 256);
-        setBrightness(1);
+        setBrightness(8);
     }
 
     static void update() {
-        LEDS.setBrightness(screenConfig["brightness"].toInt() * 8 * screenOpened);
+        LEDS.setBrightness(brightness * screenOpened);
         LEDS.show();
     }
 
-    static void loadConfig() {
-        screenConfig.loadConfig();
-        update();
-    }
-
-    static void setBrightness(uint8_t brightness) {
-        if (brightness >= 1 and brightness <= 4 and screenConfig["brightness"].toInt() != brightness) {
-            screenConfig["brightness"] = String(brightness);
-            screenConfig.saveConfig();
+    static void setBrightness(uint8_t new_brightness) {
+        if (new_brightness > 0 and new_brightness != brightness) {
+            brightness = new_brightness;
+            update();
         }
-        update();
     }
 
     static uint8_t getBrightness() {
-        return screenConfig["brightness"].toInt();
+        return LEDS.getBrightness();
     }
 
     static void closeScreen() {
@@ -44,23 +42,28 @@ public:
     }
 
     static void switchScreen() {
-        if (screenOpened) {
-            closeScreen();
-        } else {
-            openScreen();
-        }
+        screenOpened = !screenOpened;
+        update();
+    }
+
+    static void showFrame(ScreenFrame frame) {
+        showFrame(frame.data);
     }
 
     static void showFrame(uint32_t frame[8][32]) {
-        for (int y = 0; y < 8; y++) {
-            for (int x = 0; x < 32; x++) {
+        LEDS.clearData();
+        for (uint8_t y = 0; y < 8; y++) {
+            for (uint8_t x = 0; x < 32; x++) {
                 setPixel(x, y, frame[y][x]);
             }
         }
         update();
     }
 
-    static void setPixel(int x, int y, uint32_t color, bool updateScreen = false) {
+    static void setPixel(uint8_t x, uint8_t y, uint32_t color, bool updateScreen = false) {
+        if (x > 31 or y > 7) {
+            return;
+        }
         leds[y * 32 + (y % 2 == 0 ? x : 31 - x)] = color;
         if (updateScreen) {
             update();
@@ -70,6 +73,4 @@ public:
 
 CRGB ScreenController::leds[256];
 bool ScreenController::screenOpened = true;
-Config ScreenController::screenConfig = Config("screen", "屏幕", {
-        ConfigItem("brightness", "亮度", "1", "范围1~4级", "^[1-4]$", true, true)
-});
+uint8_t ScreenController::brightness = 8;
