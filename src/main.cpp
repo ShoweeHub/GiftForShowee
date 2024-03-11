@@ -3,22 +3,13 @@
 #include <WiFi.h>
 #include <WebServer.h>
 #include <DNSServer.h>
-#include <FastLED.h>
 #include <configLib.h>
+#include <ScreenController.h>
 #include <bilibiliFans.h>
 
 #define LEFT_BUTTON 26
 #define CENTER_BUTTON 16
 #define RIGHT_BUTTON 5
-
-#define LED_NUMBERS 256
-#define LED_PIN 21
-#define LED_TYPE WS2812B
-#define LED_COLOR_ORDER GRB
-
-uint8_t LED_BRIGHTNESS = 8;
-
-CRGB leds[LED_NUMBERS];
 
 Config baseConfig = Config("base", "基础", {
         ConfigItem("host_name", "本设备名称", "Showee-PandoraBox", "1~32个字符(字母或数字或_-)", "^[a-zA-Z0-9_\\-]{1,32}$", true, true),
@@ -166,12 +157,11 @@ void startWebServer() {
 void setup() {
     Serial.begin(115200);
     Serial.println("\n========设备重启========");
-    LEDS.addLeds<LED_TYPE, LED_PIN, LED_COLOR_ORDER>(leds, LED_NUMBERS);
-    LEDS.setBrightness(LED_BRIGHTNESS);
-    LEDS.show();
+    ScreenController::setup();
     if (!beginLittleFS()) {
         reboot("LittleFS 故障");
     }
+    ScreenController::loadConfig();
     WiFi.onEvent(onWiFiEvent);
     if (!baseConfig.loadConfig() || !startSTA()) {
         startAP();
