@@ -12,7 +12,7 @@ public:
     BilibiliFansApplication() : Application("bilibiliFans", "B站粉丝计数器", {
             ConfigItem("uid", "B站UID", "3493110847900630", "请输入B站UID", "^[1-9][0-9]{0,15}$", true, true),
             ConfigItem("delay", "刷新周期(秒)", "5", "范围3~10S", "^[3-9]$|^10$", true, true)
-    }, true) {}
+    }, false) {}
 
     ScreenController::ScreenFrame getOutsideScreenFrame() override {
         ScreenController::ScreenFrame frame{};

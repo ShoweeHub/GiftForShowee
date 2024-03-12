@@ -140,15 +140,87 @@ void startWebServer() {
     pinMode(LEFT_BUTTON, INPUT_PULLUP);
     pinMode(CENTER_BUTTON, INPUT_PULLUP);
     pinMode(RIGHT_BUTTON, INPUT_PULLUP);
+    uint8_t leftButtonPressedCount = 0;
+    uint8_t centerButtonPressedCount = 0;
+    uint8_t rightButtonPressedCount = 0;
+    const uint8_t longPressCount = 10;
     while (true) {
         if (digitalRead(LEFT_BUTTON) == HIGH) {
-            Serial.println("LEFT_BUTTON被按下");
+            if (leftButtonPressedCount >= longPressCount) {
+                if (leftButtonPressedCount == longPressCount) {
+                    Serial.println("左键被长按");
+                    if (rightButtonPressedCount > longPressCount) {
+                        Serial.println("左右键同时长按");
+                        if (WiFiClass::getMode() != WIFI_AP) {
+                            startAP();
+                        } else {
+                            reboot("主动重启");
+                        }
+                    }
+                }
+                leftButtonPressedCount = longPressCount + 1;
+            } else {
+                leftButtonPressedCount++;
+            }
+        } else {
+            if (leftButtonPressedCount >= longPressCount) {
+                Serial.println("左键被长按松开");
+            } else if (leftButtonPressedCount > 0) {
+                Serial.println("左键被短按松开");
+                if (WiFiClass::getMode() == WIFI_STA and WiFiClass::status() == WL_CONNECTED) {
+                    ApplicationController::onLeftButtonPressed();
+                }
+            }
+            leftButtonPressedCount = 0;
         }
         if (digitalRead(CENTER_BUTTON) == LOW) {
-            Serial.println("CENTER_BUTTON被按下");
+            if (centerButtonPressedCount >= longPressCount) {
+                if (centerButtonPressedCount == longPressCount) {
+                    Serial.println("中键被长按");
+                    ScreenController::switchScreen();
+                }
+                centerButtonPressedCount = longPressCount + 1;
+            } else {
+                centerButtonPressedCount++;
+            }
+        } else {
+            if (centerButtonPressedCount >= longPressCount) {
+                Serial.println("中键被长按松开");
+            } else if (centerButtonPressedCount > 0) {
+                Serial.println("中键被短按松开");
+                if (WiFiClass::getMode() == WIFI_STA and WiFiClass::status() == WL_CONNECTED) {
+                    ApplicationController::onCenterButtonPressed();
+                }
+            }
+            centerButtonPressedCount = 0;
         }
         if (digitalRead(RIGHT_BUTTON) == HIGH) {
-            Serial.println("RIGHT_BUTTON被按下");
+            if (rightButtonPressedCount >= longPressCount) {
+                if (rightButtonPressedCount == longPressCount) {
+                    Serial.println("右键被长按");
+                    if (leftButtonPressedCount > longPressCount) {
+                        Serial.println("左右键同时长按");
+                        if (WiFiClass::getMode() != WIFI_AP) {
+                            startAP();
+                        } else {
+                            reboot("主动重启");
+                        }
+                    }
+                }
+                rightButtonPressedCount = longPressCount + 1;
+            } else {
+                rightButtonPressedCount++;
+            }
+        } else {
+            if (rightButtonPressedCount >= longPressCount) {
+                Serial.println("右键被长按松开");
+            } else if (rightButtonPressedCount > 0) {
+                Serial.println("右键被短按松开");
+                if (WiFiClass::getMode() == WIFI_STA and WiFiClass::status() == WL_CONNECTED) {
+                    ApplicationController::onRightButtonPressed();
+                }
+            }
+            rightButtonPressedCount = 0;
         }
         vTaskDelay(100 / portTICK_PERIOD_MS);
     }

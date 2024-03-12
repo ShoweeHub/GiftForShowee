@@ -60,7 +60,6 @@ private:
                 wifi_connecting_frame_index = (wifi_connecting_frame_index + 1) % 150;
                 ScreenController::showFrame(temp_screen_wifi_logo);
             } else if (WiFiClass::getMode() == WIFI_STA and WiFiClass::status() == WL_CONNECTED) {
-                Serial.println(WiFiClass::getMode());
                 ScreenController::showFrame(getScreenFrame());
             }
             vTaskDelay(20 / portTICK_PERIOD_MS);
@@ -74,7 +73,7 @@ public:
         apps.push_back(app);
     }
 
-    static void LeftButtonPressed() {
+    static void onLeftButtonPressed() {
         if (apps.empty()) return;
         if (inApp) {
             apps[selectedApp]->onLeftButtonPressed();
@@ -83,7 +82,7 @@ public:
         }
     }
 
-    static void CenterButtonPressed() {
+    static void onCenterButtonPressed() {
         if (apps.empty()) return;
         if (apps[selectedApp]->hasInsideScreen) {
             inApp = !inApp;
@@ -92,7 +91,7 @@ public:
         }
     }
 
-    static void RightButtonPressed() {
+    static void onRightButtonPressed() {
         if (apps.empty()) return;
         if (inApp) {
             apps[selectedApp]->onRightButtonPressed();
