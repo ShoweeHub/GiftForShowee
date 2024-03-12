@@ -1,3 +1,5 @@
+#include <screen_wifi_state.h>
+
 class Application {
 public:
     Config config;
@@ -45,9 +47,22 @@ private:
     }
 
     [[noreturn]] static void showScreenFrame(__attribute__((unused)) void *pVoid) {
+        uint8_t wifi_connecting_frame_index = 0;
         while (true) {
-            //TODO 此处应该检查WIFI连接状态并优先显示
-            ScreenController::showFrame(getScreenFrame());
+            if (WiFiClass::getMode() == WIFI_AP) {
+                ScreenController::showFrame(screen_ap_mode);
+            } else if (WiFiClass::getMode() == WIFI_STA and WiFiClass::status() != WL_CONNECTED) {
+                uint32_t temp_screen_wifi_logo[8][32];
+                memcpy(temp_screen_wifi_logo, screen_wifi_logo, sizeof(screen_wifi_logo));
+                for (int i = 0; i < wifi_connecting_frame_index / 25; i++) {
+                    temp_screen_wifi_logo[6][17 + i * 3] = 0x4DA6FF;
+                }
+                wifi_connecting_frame_index = (wifi_connecting_frame_index + 1) % 150;
+                ScreenController::showFrame(temp_screen_wifi_logo);
+            } else if (WiFiClass::getMode() == WIFI_STA and WiFiClass::status() == WL_CONNECTED) {
+                Serial.println(WiFiClass::getMode());
+                ScreenController::showFrame(getScreenFrame());
+            }
             vTaskDelay(20 / portTICK_PERIOD_MS);
         }
     }

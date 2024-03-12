@@ -46,11 +46,11 @@ public:
         update();
     }
 
-    static void showFrame(ScreenFrame frame) {
+    static void showFrame(const ScreenFrame &frame) {
         showFrame(frame.data);
     }
 
-    static void showFrame(uint32_t frame[8][32]) {
+    static void showFrame(const uint32_t (&frame)[8][32]) {
         LEDS.clearData();
         for (uint8_t y = 0; y < 8; y++) {
             for (uint8_t x = 0; x < 32; x++) {
@@ -60,10 +60,12 @@ public:
         update();
     }
 
-    static void setPixel(uint8_t x, uint8_t y, uint32_t color, bool updateScreen = false) {
+    static void setPixel(uint8_t x, uint8_t y, CRGB color, bool updateScreen = false) {
         if (x > 31 or y > 7) {
             return;
         }
+        color.g = uint8_t(color.g * 0.8);
+        color.b = uint8_t(color.b * 0.5);
         leds[y * 32 + (y % 2 == 0 ? x : 31 - x)] = color;
         if (updateScreen) {
             update();
