@@ -49,7 +49,9 @@ private:
     [[noreturn]] static void showScreenFrame(__attribute__((unused)) void *pVoid) {
         uint8_t wifi_connecting_frame_index = 0;
         while (true) {
-            if (WiFiClass::getMode() == WIFI_AP) {
+            if (showRebootScreen) {
+                ScreenController::showFrame(screen_reboot_logo);
+            } else if (WiFiClass::getMode() == WIFI_AP) {
                 ScreenController::showFrame(screen_ap_mode);
             } else if (WiFiClass::getMode() == WIFI_STA and WiFiClass::status() != WL_CONNECTED) {
                 uint32_t temp_screen_wifi_logo[8][32];
@@ -68,6 +70,7 @@ private:
 
 public:
     static std::vector<Application *> apps;
+    static bool showRebootScreen;
 
     static void registerApp(Application *app) {
         apps.push_back(app);
@@ -111,6 +114,7 @@ public:
 bool ApplicationController::inApp = false;
 size_t ApplicationController::selectedApp = 0;
 std::vector<Application *> ApplicationController::apps;
+bool ApplicationController::showRebootScreen = false;
 
 Application::Application(const String &name, const String &alias, const std::vector<ConfigItem> &items, bool hasInsideScreen, UBaseType_t priority) : config(name, alias, items) {
     this->hasInsideScreen = hasInsideScreen;
