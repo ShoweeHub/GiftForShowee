@@ -60,6 +60,10 @@ public:
         update();
     }
 
+    static bool isScreenOpened() {
+        return screenOpened;
+    }
+
     static void setPixel(uint8_t x, uint8_t y, CRGB color, bool updateScreen = false) {
         if (x > 31 or y > 7) {
             return;

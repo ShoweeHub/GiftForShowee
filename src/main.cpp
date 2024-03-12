@@ -144,17 +144,21 @@ void startWebServer() {
     uint8_t centerButtonPressedCount = 0;
     uint8_t rightButtonPressedCount = 0;
     const uint8_t longPressCount = 10;
+    bool canPressAppButton;
     while (true) {
+        canPressAppButton = (WiFiClass::getMode() == WIFI_STA and WiFiClass::status() == WL_CONNECTED and ScreenController::isScreenOpened());
         if (digitalRead(LEFT_BUTTON) == HIGH) {
             if (leftButtonPressedCount >= longPressCount) {
                 if (leftButtonPressedCount == longPressCount) {
                     Serial.println("左键被长按");
                     if (rightButtonPressedCount > longPressCount) {
                         Serial.println("左右键同时长按");
-                        if (WiFiClass::getMode() != WIFI_AP) {
-                            startAP();
-                        } else {
-                            reboot("主动重启");
+                        if (ScreenController::isScreenOpened()) {
+                            if (WiFiClass::getMode() != WIFI_AP) {
+                                startAP();
+                            } else {
+                                reboot("主动重启");
+                            }
                         }
                     }
                 }
@@ -167,7 +171,7 @@ void startWebServer() {
                 Serial.println("左键被长按松开");
             } else if (leftButtonPressedCount > 0) {
                 Serial.println("左键被短按松开");
-                if (WiFiClass::getMode() == WIFI_STA and WiFiClass::status() == WL_CONNECTED) {
+                if (canPressAppButton) {
                     ApplicationController::onLeftButtonPressed();
                 }
             }
@@ -188,7 +192,7 @@ void startWebServer() {
                 Serial.println("中键被长按松开");
             } else if (centerButtonPressedCount > 0) {
                 Serial.println("中键被短按松开");
-                if (WiFiClass::getMode() == WIFI_STA and WiFiClass::status() == WL_CONNECTED) {
+                if (canPressAppButton) {
                     ApplicationController::onCenterButtonPressed();
                 }
             }
@@ -200,10 +204,12 @@ void startWebServer() {
                     Serial.println("右键被长按");
                     if (leftButtonPressedCount > longPressCount) {
                         Serial.println("左右键同时长按");
-                        if (WiFiClass::getMode() != WIFI_AP) {
-                            startAP();
-                        } else {
-                            reboot("主动重启");
+                        if (ScreenController::isScreenOpened()) {
+                            if (WiFiClass::getMode() != WIFI_AP) {
+                                startAP();
+                            } else {
+                                reboot("主动重启");
+                            }
                         }
                     }
                 }
@@ -216,7 +222,7 @@ void startWebServer() {
                 Serial.println("右键被长按松开");
             } else if (rightButtonPressedCount > 0) {
                 Serial.println("右键被短按松开");
-                if (WiFiClass::getMode() == WIFI_STA and WiFiClass::status() == WL_CONNECTED) {
+                if (canPressAppButton) {
                     ApplicationController::onRightButtonPressed();
                 }
             }
