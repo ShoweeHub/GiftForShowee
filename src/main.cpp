@@ -8,6 +8,7 @@
 #include <Application.h>
 #include <bilibiliFans.h>
 #include <screenClock.h>
+#include <screenBrightnessController.h>
 
 #define LEFT_BUTTON 26
 #define CENTER_BUTTON 16
@@ -21,6 +22,7 @@ Config baseConfig = Config("base", "基础", {
 });
 BilibiliFansApplication bilibiliFansApplication;
 ScreenClockApplication screenClockApplication;
+ScreenBrightnessControllerApplication screenBrightnessControllerApplication;
 
 WebServer server(80);
 DNSServer dnsServer;
@@ -156,7 +158,7 @@ void startWebServer() {
     uint8_t leftButtonPressedCount = 0;
     uint8_t centerButtonPressedCount = 0;
     uint8_t rightButtonPressedCount = 0;
-    const uint8_t longPressCount = 10;
+    const uint8_t longPressCount = 100;
     bool canPressAppButton;
     while (true) {
         canPressAppButton = (WiFiClass::getMode() == WIFI_STA and WiFiClass::status() == WL_CONNECTED and ScreenController::isScreenOpened());
@@ -241,7 +243,7 @@ void startWebServer() {
             }
             rightButtonPressedCount = 0;
         }
-        vTaskDelay(100 / portTICK_PERIOD_MS);
+        vTaskDelay(10 / portTICK_PERIOD_MS);
     }
 }
 

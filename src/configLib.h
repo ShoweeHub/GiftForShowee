@@ -47,9 +47,9 @@ private:
 public:
     String name;
     String alias;
-    std::vector<ConfigItem> items;
+    std::vector <ConfigItem> items;
 
-    Config(const String &name, const String &alias, const std::vector<ConfigItem> &items) {
+    Config(const String &name, const String &alias, const std::vector <ConfigItem> &items) {
         this->name = name;
         this->alias = alias;
         this->items = items;

@@ -21,7 +21,7 @@ public:
     }
 
     static void setBrightness(uint8_t new_brightness) {
-        if (new_brightness > 0 and new_brightness != brightness) {
+        if (new_brightness >= 2 and new_brightness <= 32 and new_brightness != brightness) {
             brightness = new_brightness;
             update();
         }

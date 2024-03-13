@@ -6,7 +6,7 @@ public:
     bool hasInsideScreen;
     UBaseType_t priority = 2;
 
-    Application(const String &name, const String &alias, const std::vector<ConfigItem> &items, bool hasInsideScreen, UBaseType_t priority = 2);
+    Application(const String &name, const String &alias, const std::vector <ConfigItem> &items, bool hasInsideScreen, UBaseType_t priority = 2);
 
     virtual ScreenController::ScreenFrame getOutsideScreenFrame() = 0;
 
@@ -116,7 +116,7 @@ size_t ApplicationController::selectedApp = 0;
 std::vector<Application *> ApplicationController::apps;
 bool ApplicationController::showRebootScreen = false;
 
-Application::Application(const String &name, const String &alias, const std::vector<ConfigItem> &items, bool hasInsideScreen, UBaseType_t priority) : config(name, alias, items) {
+Application::Application(const String &name, const String &alias, const std::vector <ConfigItem> &items, bool hasInsideScreen, UBaseType_t priority) : config(name, alias, items) {
     this->hasInsideScreen = hasInsideScreen;
     this->priority = priority > 8 ? 8 : priority;
     ApplicationController::registerApp(this);
