@@ -9,6 +9,7 @@
 #include <bilibiliFans.h>
 #include <screenClock.h>
 #include <screenBrightnessController.h>
+#include <digitalRain.h>
 
 #define LEFT_BUTTON 26
 #define CENTER_BUTTON 16
@@ -23,6 +24,7 @@ Config baseConfig = Config("base", "基础", {
 BilibiliFansApplication bilibiliFansApplication;
 ScreenClockApplication screenClockApplication;
 ScreenBrightnessControllerApplication screenBrightnessControllerApplication;
+DigitalRainApplication digitalRainApplication;
 
 WebServer server(80);
 DNSServer dnsServer;
