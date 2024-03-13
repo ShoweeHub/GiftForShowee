@@ -38,6 +38,7 @@ public:
 class Config {
 private:
     static const String configPageHtmlTemplate;
+    static const String homepageButtonTemplate;
 
     static String JsonStringOr(const JsonVariant &v, const String &def, bool notBlank) {
         return v.isNull() || (notBlank && v.as<String>().length() == 0) ? def : v.as<String>();
@@ -122,12 +123,42 @@ public:
         result.trim();
         return result;
     }
+
+    String getHomePageButton() const {
+        String result = homepageButtonTemplate;
+        result.replace("[ALIAS]", alias);
+        result.replace("[NAME]", name);
+        return result;
+    }
+};
+
+class HomePage {
+private:
+    static const String homePageHtmlTemplate;
+public:
+    static String homePageHtml;
+
+    static void initHomePageHtml(const String &hostName, const std::vector<Config *> &configs) {
+        homePageHtml = homePageHtmlTemplate;
+        String buttons;
+        for (auto config: configs) {
+            buttons += config->getHomePageButton();
+            buttons.trim();
+        }
+        homePageHtml.replace("[BUTTONS]", buttons);
+        homePageHtml.replace("[HOST_NAME]", hostName);
+        homePageHtml.trim();
+    }
 };
 
 const String ConfigItem::inputElementTemplate = R"=====(
     <label>[ALIAS]:
         <input name='[NAME]' [REQUIRED] type='text' value='[VALUE]' placeholder='[PLACEHOLDER]' title='[PLACEHOLDER]' pattern='[PATTERN]'>
     </label>
+)=====";
+
+const String Config::homepageButtonTemplate = R"=====(
+    <button onclick="window.location.href='[NAME]Config'">[ALIAS]配置页面</button>
 )=====";
 
 const String Config::configPageHtmlTemplate = R"=====(
@@ -203,3 +234,58 @@ const String Config::configPageHtmlTemplate = R"=====(
 </script>
 </html>
 )=====";
+
+const String HomePage::homePageHtmlTemplate = R"=====(
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+    <meta charset='UTF-8'>
+    <meta content='width=device-width, initial-scale=1.0' name='viewport'>
+    <title>[HOST_NAME]主页</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            padding: 0;
+            background-color: #f0f0f0;
+        }
+
+        .button-group {
+            max-width: 300px;
+            margin: auto;
+            padding: 20px;
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            text-align: center;
+            color: #333;
+        }
+
+        .button-group button {
+            width: 100%;
+            background-color: #4CAF50;
+            color: white;
+            padding: 14px 20px;
+            margin: 8px 0;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .button-group button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+<h2>[HOST_NAME]主页</h2>
+<div class="button-group">
+    [BUTTONS]
+</div>
+</body>
+</html>
+)=====";
+String HomePage::homePageHtml;

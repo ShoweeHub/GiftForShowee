@@ -109,9 +109,13 @@ void startAP() {
     startDNSServer();
 }
 
+void handleHomePage() {
+    server.send(200, "text/html", HomePage::homePageHtml);
+}
+
 void handleNotFound() {
     Serial.println("未找到: " + server.uri());
-    server.send(200, "application/json", R"({"code":-1,"msg":"Not Found"})");
+    handleHomePage();
 }
 
 void ServerHandleConfig(Config &config) {
@@ -127,10 +131,15 @@ void ServerHandleConfig(Config &config) {
 }
 
 void startWebServer() {
-    ServerHandleConfig(baseConfig);
+    std::vector<Config *> configs = {&baseConfig};
     for (auto app: ApplicationController::apps) {
-        ServerHandleConfig(app->config);
+        configs.push_back(&app->config);
     }
+    for (auto config: configs) {
+        ServerHandleConfig(*config);
+    }
+    HomePage::initHomePageHtml(baseConfig["host_name"], configs);
+    server.on("/", HTTP_GET, handleHomePage);
     server.onNotFound(handleNotFound);
     server.begin();
     webServerStarted = true;
