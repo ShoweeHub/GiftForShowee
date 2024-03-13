@@ -7,6 +7,7 @@
 #include <ScreenController.h>
 #include <Application.h>
 #include <bilibiliFans.h>
+#include <screenClock.h>
 
 #define LEFT_BUTTON 26
 #define CENTER_BUTTON 16
@@ -19,6 +20,8 @@ Config baseConfig = Config("base", "基础", {
         ConfigItem("ap_password", "AP密码", "LoveShoweeForever", "空或8~64个英文字符", "^$|^[ -~]{8,64}$", false, false)
 });
 BilibiliFansApplication bilibiliFansApplication;
+ScreenClockApplication screenClockApplication;
+
 WebServer server(80);
 DNSServer dnsServer;
 bool dnsServerStarted = false;
