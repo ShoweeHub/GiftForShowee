@@ -46,16 +46,25 @@ public:
         update();
     }
 
-    static void showFrame(const ScreenFrame &frame) {
-        showFrame(frame.data);
+    static void showFrame(const ScreenFrame &frame, bool forceDisplayAppsScreen = false) {
+        showFrame(frame.data, forceDisplayAppsScreen);
     }
 
-    static void showFrame(const uint32_t (&frame)[8][32]) {
+    static void showFrame(const uint32_t (&frame)[8][32], bool forceDisplayAppsScreen = false) {
         LEDS.clearData();
         for (uint8_t y = 0; y < 8; y++) {
             for (uint8_t x = 0; x < 32; x++) {
                 setPixel(x, y, frame[y][x]);
             }
+        }
+        if (forceDisplayAppsScreen) {
+            setPixel(0, 0, 0xFF0000);
+            setPixel(1, 0, 0x00FF00);
+            setPixel(2, 0, 0x0000FF);
+            setPixel(3, 0, 0xFFFF00);
+            setPixel(4, 0, 0xFF00FF);
+            setPixel(5, 0, 0x00FFFF);
+            setPixel(6, 0, 0xFFFFFF);
         }
         update();
     }

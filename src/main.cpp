@@ -159,7 +159,13 @@ void startWebServer() {
     const uint8_t longPressCount = 100;
     bool canPressAppButton;
     while (true) {
-        canPressAppButton = (WiFiClass::getMode() == WIFI_STA and WiFiClass::status() == WL_CONNECTED and ScreenController::isScreenOpened());
+        canPressAppButton = WiFiClass::getMode() == WIFI_STA and WiFiClass::status() == WL_CONNECTED;
+        if (canPressAppButton and ApplicationController::forceDisplayAppsScreen) {
+            ApplicationController::forceDisplayAppsScreen = false;
+            Serial.println("关闭强制显示APP界面");
+        }
+        canPressAppButton = canPressAppButton or ApplicationController::forceDisplayAppsScreen;
+        canPressAppButton = canPressAppButton and ScreenController::isScreenOpened();
         if (digitalRead(LEFT_BUTTON) == HIGH) {
             if (leftButtonPressedCount >= longPressCount) {
                 if (leftButtonPressedCount == longPressCount) {
@@ -167,11 +173,8 @@ void startWebServer() {
                     if (rightButtonPressedCount > longPressCount) {
                         Serial.println("左右键同时长按");
                         if (ScreenController::isScreenOpened()) {
-                            if (WiFiClass::getMode() != WIFI_AP) {
-                                startAP();
-                            } else {
-                                reboot("主动重启");
-                            }
+                            Serial.println("切换强制显示APP界面");
+                            ApplicationController::forceDisplayAppsScreen = !ApplicationController::forceDisplayAppsScreen;
                         }
                     }
                 }
@@ -219,9 +222,14 @@ void startWebServer() {
                         Serial.println("左右键同时长按");
                         if (ScreenController::isScreenOpened()) {
                             if (WiFiClass::getMode() != WIFI_AP) {
+                                ApplicationController::forceDisplayAppsScreen = false;
                                 startAP();
                             } else {
-                                reboot("主动重启");
+                                if (ApplicationController::forceDisplayAppsScreen) {
+                                    ApplicationController::forceDisplayAppsScreen = false;
+                                } else {
+                                    reboot("主动重启");
+                                }
                             }
                         }
                     }

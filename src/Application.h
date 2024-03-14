@@ -62,6 +62,8 @@ private:
         while (true) {
             if (showRebootScreen) {
                 ScreenController::showFrame(screen_reboot_logo);
+            } else if (forceDisplayAppsScreen or WiFiClass::getMode() == WIFI_STA and WiFiClass::status() == WL_CONNECTED) {
+                ScreenController::showFrame(getScreenFrame(), forceDisplayAppsScreen);
             } else if (WiFiClass::getMode() == WIFI_AP) {
                 ScreenController::showFrame(screen_ap_mode);
             } else if (WiFiClass::getMode() == WIFI_STA and WiFiClass::status() != WL_CONNECTED) {
@@ -72,8 +74,6 @@ private:
                 }
                 wifi_connecting_frame_index = (wifi_connecting_frame_index + 1) % 150;
                 ScreenController::showFrame(temp_screen_wifi_logo);
-            } else if (WiFiClass::getMode() == WIFI_STA and WiFiClass::status() == WL_CONNECTED) {
-                ScreenController::showFrame(getScreenFrame());
             }
             vTaskDelay(20 / portTICK_PERIOD_MS);
         }
@@ -82,6 +82,7 @@ private:
 public:
     static std::vector<Application *> apps;
     static bool showRebootScreen;
+    static bool forceDisplayAppsScreen;
 
     static void registerApp(Application *app) {
         apps.push_back(app);
@@ -135,6 +136,7 @@ bool ApplicationController::inApp = false;
 size_t ApplicationController::selectedApp = 0;
 std::vector<Application *> ApplicationController::apps;
 bool ApplicationController::showRebootScreen = false;
+bool ApplicationController::forceDisplayAppsScreen = false;
 
 Application::Application(const String &name, const String &alias, const std::vector<ConfigItem> &items, bool hasInsideScreen, UBaseType_t priority) : config(name, alias, items) {
     this->hasInsideScreen = hasInsideScreen;
