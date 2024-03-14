@@ -6,6 +6,7 @@
 #include <configLib.h>
 #include <ScreenController.h>
 #include <Application.h>
+#include <system_functions.h>
 #include <bilibiliFans.h>
 #include <screenClock.h>
 #include <screenBrightnessController.h>
@@ -30,13 +31,6 @@ WebServer server(80);
 DNSServer dnsServer;
 bool dnsServerStarted = false;
 bool webServerStarted = false;
-
-void reboot(const String &msg = "") {
-    ApplicationController::showRebootScreen = true;
-    Serial.printf("%s%s设备3秒后重启...\n", msg.c_str(), msg.length() > 0 ? "\n" : "");
-    vTaskDelay(3000 / portTICK_PERIOD_MS);
-    ESP.restart();
-}
 
 bool beginLittleFS() {
     Serial.println("正在初始化 LittleFS...");

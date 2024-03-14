@@ -7,6 +7,7 @@ private:
     uint32_t numColor = 0x40C5F1;
     uint32_t backgroundColor = 0x000000;
     long bilibiliFansCount = 0;
+    bool selected = false;
     static const bool logo[8][8];
 public:
     BilibiliFansApplication() : Application("bilibiliFans", "B站粉丝计数器", {
@@ -91,10 +92,28 @@ public:
         Serial.printf("%s右键被按下\n", config.alias.c_str());
     }
 
+    void enterInsideScreen() override {
+        Serial.printf("%s进入内部界面\n", config.alias.c_str());
+    }
+
+    void exitInsideScreen() override {
+        Serial.printf("%s退出内部界面\n", config.alias.c_str());
+    }
+
+    void onSelected() override {
+        selected = true;
+        Serial.printf("%s被选中\n", config.alias.c_str());
+    }
+
+    void onUnselected() override {
+        selected = false;
+        Serial.printf("%s被取消选中\n", config.alias.c_str());
+    }
+
     [[noreturn]] void mainTask() override {
         config.loadConfig();
         while (true) {
-            if (WiFiClass::getMode() == WIFI_STA and WiFiClass::status() == WL_CONNECTED) {
+            if (selected and WiFiClass::getMode() == WIFI_STA and WiFiClass::status() == WL_CONNECTED) {
                 HTTPClient http;
                 http.begin("https://api.bilibili.com/x/relation/stat?vmid=" + config["uid"]);
                 Serial.println("正在请求B站API...");

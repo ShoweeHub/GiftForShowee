@@ -110,6 +110,22 @@ public:
         ApplicationController::onRightButtonPressed();
     }
 
+    void enterInsideScreen() override {
+        Serial.printf("%s进入内部界面\n", config.alias.c_str());
+    }
+
+    void exitInsideScreen() override {
+        Serial.printf("%s退出内部界面\n", config.alias.c_str());
+    }
+
+    void onSelected() override {
+        Serial.printf("%s被选中\n", config.alias.c_str());
+    }
+
+    void onUnselected() override {
+        Serial.printf("%s被取消选中\n", config.alias.c_str());
+    }
+
     void mainTask() override {
         config.loadConfig();
         configTime(config["time_zone"].toInt() * 3600, 0, "cn.pool.ntp.org", "time.windows.com");

@@ -1,4 +1,4 @@
-#include <screen_wifi_state.h>
+#include <screen_state.h>
 
 class Application {
 public:
@@ -17,6 +17,14 @@ public:
     virtual void onLeftButtonPressed() = 0;
 
     virtual void onRightButtonPressed() = 0;
+
+    virtual void enterInsideScreen() = 0;
+
+    virtual void exitInsideScreen() = 0;
+
+    virtual void onSelected() = 0;
+
+    virtual void onUnselected() = 0;
 };
 
 class ApplicationController {
@@ -48,6 +56,9 @@ private:
 
     [[noreturn]] static void showScreenFrame(__attribute__((unused)) void *pVoid) {
         uint8_t wifi_connecting_frame_index = 0;
+        if (!apps.empty()) {
+            apps[selectedApp]->onSelected();
+        }
         while (true) {
             if (showRebootScreen) {
                 ScreenController::showFrame(screen_reboot_logo);
@@ -81,7 +92,9 @@ public:
         if (inApp) {
             apps[selectedApp]->onLeftButtonPressed();
         } else {
+            apps[selectedApp]->onUnselected();
             selectedApp = (selectedApp - 1 + apps.size()) % apps.size();
+            apps[selectedApp]->onSelected();
         }
     }
 
@@ -89,6 +102,11 @@ public:
         if (apps.empty()) return;
         if (apps[selectedApp]->hasInsideScreen) {
             inApp = !inApp;
+            if (inApp) {
+                apps[selectedApp]->enterInsideScreen();
+            } else {
+                apps[selectedApp]->exitInsideScreen();
+            }
         } else {
             inApp = false;
         }
@@ -99,7 +117,9 @@ public:
         if (inApp) {
             apps[selectedApp]->onRightButtonPressed();
         } else {
+            apps[selectedApp]->onUnselected();
             selectedApp = (selectedApp + 1) % apps.size();
+            apps[selectedApp]->onSelected();
         }
     }
 

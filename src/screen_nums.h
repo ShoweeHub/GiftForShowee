@@ -71,9 +71,9 @@ constexpr static const bool screen_nums[10][5][3] = {
         }
 };
 constexpr static const bool screen_w[5][5] = {
-        {true, false, false, false, true},
-        {true, false, false, false, true},
-        {true, false, true, false, true},
-        {true, false, true, false, true},
-        {false, true, false, true, false}
+        {true,  false, false, false, true},
+        {true,  false, false, false, true},
+        {true,  false, true,  false, true},
+        {true,  false, true,  false, true},
+        {false, true,  false, true,  false}
 };
