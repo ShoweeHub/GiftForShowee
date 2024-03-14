@@ -30,12 +30,49 @@ public:
         uint8_t bilibiliFansCountStrLength = bilibiliFansCountStr.length();
         if (bilibiliFansCountStrLength <= 6) {
             uint8_t startX = 21 - bilibiliFansCountStrLength * 2;
-            for (uint8_t i = 0; i < bilibiliFansCountStrLength; i++) {
+            for (auto i: bilibiliFansCountStr) {
+                uint8_t num = i - '0';
+                for (uint8_t y = 0; y < 5; y++) {
+                    for (uint8_t x = 0; x < 3; x++) {
+                        frame.data[y + 2][startX + x] = screen_nums[num][y][x] ? numColor : backgroundColor;
+                    }
+                }
+                startX += 4;
+            }
+        } else if (bilibiliFansCountStrLength == 7) {
+            uint8_t startX = 9;
+            for (uint8_t i = 0; i < 4; i++) {
                 uint8_t num = bilibiliFansCountStr[i] - '0';
                 for (uint8_t y = 0; y < 5; y++) {
                     for (uint8_t x = 0; x < 3; x++) {
-                        frame.data[y + 2][startX + i * 4 + x] = screen_nums[num][y][x] ? numColor : backgroundColor;
+                        frame.data[y + 2][startX + x] = screen_nums[num][y][x] ? numColor : backgroundColor;
                     }
+                }
+                startX += 4;
+                if (i == 2) {
+                    frame.data[6][startX] = numColor;
+                    startX += 2;
+                }
+            }
+            for (uint8_t y = 0; y < 5; y++) {
+                for (uint8_t x = 0; x < 5; x++) {
+                    frame.data[y + 2][startX + x] = screen_w[y][x] ? numColor : backgroundColor;
+                }
+            }
+        } else if (bilibiliFansCountStrLength == 8) {
+            uint8_t startX = 10;
+            for (uint8_t i = 0; i < 4; i++) {
+                uint8_t num = bilibiliFansCountStr[i] - '0';
+                for (uint8_t y = 0; y < 5; y++) {
+                    for (uint8_t x = 0; x < 3; x++) {
+                        frame.data[y + 2][startX + x] = screen_nums[num][y][x] ? numColor : backgroundColor;
+                    }
+                }
+                startX += 4;
+            }
+            for (uint8_t y = 0; y < 5; y++) {
+                for (uint8_t x = 0; x < 5; x++) {
+                    frame.data[y + 2][startX + x] = screen_w[y][x] ? numColor : backgroundColor;
                 }
             }
         }
