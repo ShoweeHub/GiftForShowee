@@ -150,9 +150,9 @@ void startWebServer() {
 }
 
 [[noreturn]] void listenButtonsPressed(__attribute__((unused)) void *pVoid) {
-    pinMode(LEFT_BUTTON, INPUT_PULLUP);
+    pinMode(LEFT_BUTTON, INPUT_PULLDOWN);
     pinMode(CENTER_BUTTON, INPUT_PULLUP);
-    pinMode(RIGHT_BUTTON, INPUT_PULLUP);
+    pinMode(RIGHT_BUTTON, INPUT_PULLDOWN);
     uint8_t leftButtonPressedCount = 0;
     uint8_t centerButtonPressedCount = 0;
     uint8_t rightButtonPressedCount = 0;

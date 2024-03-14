@@ -18,7 +18,7 @@ lib_deps =
 
 ## 使用说明
 
-1. 第一开机,因为没有保存WiFi信息,会进入AP模式,如图
+1. 第一次开机,因为没有保存WiFi信息,会进入AP模式,如图
    ![img.png](images/img.png)
 2. 此时可以通过手机或电脑连接本设备提供的WiFi热点,默认名称:守一Showee的潘多拉魔盒,密码:LoveShoweeForever
 3. 连接成功后,手机或电脑会自动跳转到配置页面,如图
