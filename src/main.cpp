@@ -267,6 +267,7 @@ void setup() {
         startAP();
     }
     startWebServer();
+    xTaskCreate(checkAndUpdate, "checkAndUpdate", 4096, nullptr, 1, nullptr);
 }
 
 void loop() {
