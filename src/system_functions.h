@@ -72,6 +72,8 @@ String get_md5(const String &url) {
                 md5 = get_md5(actual_firmware_url);
                 Serial.printf("当前固件的md5:%s,新固件的md5:%s\n", otaConfig["md5"].c_str(), md5.c_str());
                 if (md5.length() > 0 and otaConfig["md5"] != md5) {
+                    Serial.println("发现新固件,3秒后开始OTA更新");
+                    vTaskDelay(3000 / portTICK_PERIOD_MS);
                     WiFiClientSecure wiFiClient;
                     wiFiClient.setInsecure();
                     httpUpdate.update(wiFiClient, actual_firmware_url);
