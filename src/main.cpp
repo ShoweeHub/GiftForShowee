@@ -11,6 +11,7 @@
 #include <screenClock.h>
 #include <screenBrightnessController.h>
 #include <digitalRain.h>
+#include <screenWeather.h>
 
 #define LEFT_BUTTON 26
 #define CENTER_BUTTON 16
@@ -24,6 +25,7 @@ Config baseConfig = Config("base", "基础", {
 });
 BilibiliFansApplication bilibiliFansApplication;
 ScreenClockApplication screenClockApplication;
+ScreenWeatherApplication screenWeatherApplication;
 ScreenBrightnessControllerApplication screenBrightnessControllerApplication;
 DigitalRainApplication digitalRainApplication;
 
