@@ -41,10 +41,10 @@ String get_actual_firmware_url() {
     const char *headerKeys[] = {"Location"};
     size_t headerKeysSize = sizeof(headerKeys) / sizeof(char *);
     http.collectHeaders(headerKeys, headerKeysSize);
-    if (http.GET() == 307) {
-        return http.header("Location");
-    }
-    return "";
+    http.GET();
+    String location = http.header("Location");
+    http.end();
+    return location;
 }
 
 String get_md5(const String &url) {
@@ -53,10 +53,10 @@ String get_md5(const String &url) {
     const char *headerKeys[] = {"Etag"};
     size_t headerKeysSize = sizeof(headerKeys) / sizeof(char *);
     http.collectHeaders(headerKeys, headerKeysSize);
-    if (http.GET() == 200) {
-        return http.header("Etag");
-    }
-    return "";
+    http.GET();
+    String etag = http.header("Etag");
+    http.end();
+    return etag;
 }
 
 [[noreturn]] void checkAndUpdate(__attribute__((unused)) void *pVoid) {
@@ -66,7 +66,7 @@ String get_md5(const String &url) {
     httpUpdate.onError(update_error);
     otaConfig.loadConfig();
     while (true) {
-        if (WiFiClass::getMode() == WIFI_STA and WiFiClass::status() == WL_CONNECTED) {
+        if (WiFiClass::getMode() == WIFI_STA and WiFiClass::status() == WL_CONNECTED and xSemaphoreTake(ApplicationController::http_xMutex, (TickType_t) 1000) == pdTRUE) {
             String actual_firmware_url = get_actual_firmware_url();
             if (actual_firmware_url.length() > 0) {
                 md5 = get_md5(actual_firmware_url);
@@ -77,6 +77,7 @@ String get_md5(const String &url) {
                     httpUpdate.update(wiFiClient, actual_firmware_url);
                 }
             }
+            xSemaphoreGive(ApplicationController::http_xMutex);
             vTaskDelay(60000 / portTICK_PERIOD_MS);
         } else {
             vTaskDelay(1000 / portTICK_PERIOD_MS);

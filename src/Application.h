@@ -113,6 +113,7 @@ public:
     static bool otaUpdating;
     static uint8_t otaProgress;
     static uint16_t frame_index;
+    static SemaphoreHandle_t http_xMutex;
 
     static void registerApp(Application *app) {
         apps.push_back(app);
@@ -181,6 +182,7 @@ uint8_t ApplicationController::otaProgress = 0;
 uint16_t ApplicationController::frame_index = 0;
 bool ApplicationController::autoQueueLocked = false;
 uint8_t ApplicationController::lock_pos = 0;
+SemaphoreHandle_t ApplicationController::http_xMutex = xSemaphoreCreateMutex();
 
 Application::Application(const String &name, const String &alias, const std::vector<ConfigItem> &items, bool hasInsideScreen, UBaseType_t priority) : config(name, alias, items) {
     this->hasInsideScreen = hasInsideScreen;

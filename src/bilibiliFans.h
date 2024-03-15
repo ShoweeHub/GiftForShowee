@@ -115,7 +115,7 @@ public:
     [[noreturn]] void mainTask() override {
         config.loadConfig();
         while (true) {
-            if (selected and WiFiClass::getMode() == WIFI_STA and WiFiClass::status() == WL_CONNECTED) {
+            if (selected and WiFiClass::getMode() == WIFI_STA and WiFiClass::status() == WL_CONNECTED and xSemaphoreTake(ApplicationController::http_xMutex, (TickType_t) 1000) == pdTRUE) {
                 HTTPClient http;
                 http.begin("https://api.bilibili.com/x/relation/stat?vmid=" + config["uid"]);
                 Serial.println("正在请求B站API...");
@@ -130,6 +130,7 @@ public:
                     Serial.printf("请求失败:%s\n", HTTPClient::errorToString(httpCode).c_str());
                 }
                 http.end();
+                xSemaphoreGive(ApplicationController::http_xMutex);
                 vTaskDelay(config["delay"].toInt() * 1000 / portTICK_PERIOD_MS);
             } else {
                 vTaskDelay(1000 / portTICK_PERIOD_MS);
