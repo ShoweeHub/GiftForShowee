@@ -201,7 +201,14 @@ void startWebServer() {
             if (centerButtonPressedCount >= longPressCount) {
                 if (centerButtonPressedCount == longPressCount) {
                     Serial.println("中键被长按");
-                    ScreenController::switchScreen();
+                    if (rightButtonPressedCount > longPressCount) {
+                        Serial.println("中右键同时长按");
+                        if (canPressAppButton and !ApplicationController::forceDisplayAppsScreen) {
+                            ApplicationController::switchAutoQueueLock();
+                        }
+                    } else {
+                        ScreenController::switchScreen();
+                    }
                 }
                 centerButtonPressedCount = longPressCount + 1;
             } else {

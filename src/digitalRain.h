@@ -5,6 +5,7 @@ private:
 
 public:
     DigitalRainApplication() : Application("digitalRain", "数字雨", {}, true) {
+        inAutoQueue = true;
         for (auto &i: rainPos) {
             i[0] = random(16, 24);
             i[1] = random(0, i[0]);

@@ -13,7 +13,9 @@ private:
 public:
     ScreenClockApplication() : Application("screenClock", "屏幕时钟", {
             ConfigItem("time_zone", "时区", "+8", "请输入UTC时区,范围:-12~+12", "^(\\+?|-?)(1[0-2]|[0-9])$", true, true)
-    }, true) {}
+    }, true) {
+        inAutoQueue = true;
+    }
 
     ScreenController::ScreenFrame getOutsideScreenFrame() override {
         ScreenController::ScreenFrame frame{};

@@ -5,6 +5,7 @@ public:
     Config config;
     bool hasInsideScreen;
     UBaseType_t priority = 2;
+    bool inAutoQueue = false;
 
     Application(const String &name, const String &alias, const std::vector<ConfigItem> &items, bool hasInsideScreen, UBaseType_t priority = 2);
 
@@ -31,6 +32,8 @@ class ApplicationController {
 private:
     static bool inApp;
     static size_t selectedApp;
+    static bool autoQueueLocked;
+    static uint8_t lock_pos;
 
     static void RunAppMainTask(void *app) {
         ((Application *) app)->mainTask();
@@ -70,7 +73,24 @@ private:
                 }
                 ScreenController::showFrame(temp_screen_ota_logo);
             } else if (forceDisplayAppsScreen or WiFiClass::getMode() == WIFI_STA and WiFiClass::status() == WL_CONNECTED) {
-                ScreenController::showFrame(getScreenFrame(), forceDisplayAppsScreen);
+                ScreenController::ScreenFrame temp_screen_frame = getScreenFrame();
+                if (lock_pos > 0) {
+                    temp_screen_frame.data[0][lock_pos] = autoQueueLocked ? 0xFF0000 : 0x00FF00;
+                    lock_pos = (lock_pos + 1) % 32;
+                }
+                ScreenController::showFrame(temp_screen_frame, forceDisplayAppsScreen);
+                if (!forceDisplayAppsScreen) {
+                    frame_index++;
+                    if (frame_index >= 50 * 30) {
+                        frame_index = 0;
+                        if (!apps.empty() and !inApp and !autoQueueLocked) {
+                            onRightButtonPressed();
+                            if (!apps[selectedApp]->inAutoQueue) {
+                                frame_index = 50 * 30;
+                            }
+                        }
+                    }
+                }
             } else if (WiFiClass::getMode() == WIFI_AP) {
                 ScreenController::showFrame(screen_ap_mode);
             } else if (WiFiClass::getMode() == WIFI_STA and WiFiClass::status() != WL_CONNECTED) {
@@ -92,6 +112,7 @@ public:
     static bool forceDisplayAppsScreen;
     static bool otaUpdating;
     static uint8_t otaProgress;
+    static uint16_t frame_index;
 
     static void registerApp(Application *app) {
         apps.push_back(app);
@@ -99,6 +120,7 @@ public:
 
     static void onLeftButtonPressed() {
         if (apps.empty()) return;
+        frame_index = 0;
         if (inApp) {
             apps[selectedApp]->onLeftButtonPressed();
         } else {
@@ -110,6 +132,7 @@ public:
 
     static void onCenterButtonPressed() {
         if (apps.empty()) return;
+        frame_index = 0;
         if (apps[selectedApp]->hasInsideScreen) {
             inApp = !inApp;
             if (inApp) {
@@ -124,6 +147,7 @@ public:
 
     static void onRightButtonPressed() {
         if (apps.empty()) return;
+        frame_index = 0;
         if (inApp) {
             apps[selectedApp]->onRightButtonPressed();
         } else {
@@ -131,6 +155,12 @@ public:
             selectedApp = (selectedApp + 1) % apps.size();
             apps[selectedApp]->onSelected();
         }
+    }
+
+    static void switchAutoQueueLock() {
+        autoQueueLocked = !autoQueueLocked;
+        frame_index = 0;
+        lock_pos = 1;
     }
 
     static void start() {
@@ -148,6 +178,9 @@ bool ApplicationController::showRebootScreen = false;
 bool ApplicationController::forceDisplayAppsScreen = false;
 bool ApplicationController::otaUpdating = false;
 uint8_t ApplicationController::otaProgress = 0;
+uint16_t ApplicationController::frame_index = 0;
+bool ApplicationController::autoQueueLocked = false;
+uint8_t ApplicationController::lock_pos = 0;
 
 Application::Application(const String &name, const String &alias, const std::vector<ConfigItem> &items, bool hasInsideScreen, UBaseType_t priority) : config(name, alias, items) {
     this->hasInsideScreen = hasInsideScreen;
