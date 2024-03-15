@@ -62,6 +62,13 @@ private:
         while (true) {
             if (showRebootScreen) {
                 ScreenController::showFrame(screen_reboot_logo);
+            } else if (otaUpdating) {
+                uint32_t temp_screen_ota_logo[8][32];
+                memcpy(temp_screen_ota_logo, screen_ota_logo, sizeof(screen_ota_logo));
+                for (int i = 0; i < otaProgress; i++) {
+                    temp_screen_ota_logo[4][14 + i] = 0x0000FF;
+                }
+                ScreenController::showFrame(temp_screen_ota_logo);
             } else if (forceDisplayAppsScreen or WiFiClass::getMode() == WIFI_STA and WiFiClass::status() == WL_CONNECTED) {
                 ScreenController::showFrame(getScreenFrame(), forceDisplayAppsScreen);
             } else if (WiFiClass::getMode() == WIFI_AP) {
@@ -83,6 +90,8 @@ public:
     static std::vector<Application *> apps;
     static bool showRebootScreen;
     static bool forceDisplayAppsScreen;
+    static bool otaUpdating;
+    static uint8_t otaProgress;
 
     static void registerApp(Application *app) {
         apps.push_back(app);
@@ -126,9 +135,9 @@ public:
 
     static void start() {
         for (auto app: apps) {
-            xTaskCreate(RunAppMainTask, app->config.alias.c_str(), 4096, app, app->priority, nullptr);
+            xTaskCreate(RunAppMainTask, app->config.alias.c_str(), 16384, app, app->priority, nullptr);
         }
-        xTaskCreate(showScreenFrame, "showScreenFrame", 4096, nullptr, 9, nullptr);
+        xTaskCreate(showScreenFrame, "showScreenFrame", 16384, nullptr, 9, nullptr);
     }
 };
 
@@ -137,6 +146,8 @@ size_t ApplicationController::selectedApp = 0;
 std::vector<Application *> ApplicationController::apps;
 bool ApplicationController::showRebootScreen = false;
 bool ApplicationController::forceDisplayAppsScreen = false;
+bool ApplicationController::otaUpdating = false;
+uint8_t ApplicationController::otaProgress = 0;
 
 Application::Application(const String &name, const String &alias, const std::vector<ConfigItem> &items, bool hasInsideScreen, UBaseType_t priority) : config(name, alias, items) {
     this->hasInsideScreen = hasInsideScreen;

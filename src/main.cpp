@@ -159,6 +159,10 @@ void startWebServer() {
     const uint8_t longPressCount = 100;
     bool canPressAppButton;
     while (true) {
+        if (ApplicationController::showRebootScreen or ApplicationController::otaUpdating) {
+            vTaskDelay(10 / portTICK_PERIOD_MS);
+            continue;
+        }
         canPressAppButton = WiFiClass::getMode() == WIFI_STA and WiFiClass::status() == WL_CONNECTED;
         if (canPressAppButton and ApplicationController::forceDisplayAppsScreen) {
             ApplicationController::forceDisplayAppsScreen = false;
@@ -261,13 +265,13 @@ void setup() {
         reboot("LittleFS 故障");
     }
     ApplicationController::start();
-    xTaskCreate(listenButtonsPressed, "listenButtonsPressed", 4096, nullptr, 1, nullptr);
+    xTaskCreate(listenButtonsPressed, "listenButtonsPressed", 16384, nullptr, 1, nullptr);
     WiFi.onEvent(onWiFiEvent);
     if (!baseConfig.loadConfig() || !startSTA()) {
         startAP();
     }
     startWebServer();
-    xTaskCreate(checkAndUpdate, "checkAndUpdate", 4096, nullptr, 1, nullptr);
+    xTaskCreate(checkAndUpdate, "checkAndUpdate", 16384, nullptr, 1, nullptr);
 }
 
 void loop() {

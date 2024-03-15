@@ -15,18 +15,19 @@ void reboot(const String &msg = "") {
 
 void update_started() {
     Serial.println("开始OTA更新");
-    //TODO: OTA界面
+    ApplicationController::otaUpdating = true;
 }
 
 void update_finished() {
     otaConfig["md5"] = md5;
     otaConfig.saveConfig();
     Serial.println("OTA升级已结束");
+    ApplicationController::otaUpdating = false;
 }
 
 void update_progress(int cur, int total) {
     Serial.printf("OTA升级进度 %d/%d\n", cur, total);
-    //TODO: 百分比进度
+    ApplicationController::otaProgress = cur * 16 / total;
 }
 
 void update_error(int err) {
