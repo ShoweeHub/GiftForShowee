@@ -228,6 +228,7 @@ const String Config::configPageHtmlTemplate = R"=====(
         fetch('/[NAME]Config', {method: 'POST', body: formData})
             .then(response => {
                 console.log(response);
+                alert('保存成功,设备将自动重启,请自行关闭此页面');
             })
         return false;
     }
