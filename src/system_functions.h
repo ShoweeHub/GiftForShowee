@@ -2,9 +2,11 @@
 
 const String firmware_url = "https://g-lirb8132-generic.pkg.coding.net/gift_for_showee/esp32/firmware.bin";
 Config otaConfig = Config("ota", "OTA", {
-        ConfigItem("md5", "当前固件的md5", "", "", "", false, false)
+        ConfigItem("firmware_md5", "当前固件的md5", "", "不要随意修改,可以留空", ".*", false, false),
+        ConfigItem("firmware_url", "固件地址", firmware_url, "不要随意修改,可以留空", ".*", false, true),
+        ConfigItem("enable", "是否启用OTA", "1", "0或1", "^[0-1]$", true, true)
 });
-String md5 = "";
+String firmware_md5 = "";
 
 void reboot(const String &msg = "") {
     ApplicationController::showRebootScreen = true;
@@ -19,7 +21,7 @@ void update_started() {
 }
 
 void update_finished() {
-    otaConfig["md5"] = md5;
+    otaConfig["firmware_md5"] = firmware_md5;
     otaConfig.saveConfig();
     Serial.println("OTA升级已结束");
     ApplicationController::otaUpdating = false;
@@ -37,7 +39,7 @@ void update_error(int err) {
 
 String get_actual_firmware_url() {
     HTTPClient http;
-    http.begin(firmware_url);
+    http.begin(otaConfig["firmware_url"]);
     const char *headerKeys[] = {"Location"};
     size_t headerKeysSize = sizeof(headerKeys) / sizeof(char *);
     http.collectHeaders(headerKeys, headerKeysSize);
@@ -59,21 +61,21 @@ String get_md5(const String &url) {
     return etag;
 }
 
-[[noreturn]] void checkAndUpdate(__attribute__((unused)) void *pVoid) {
+void checkAndUpdate(__attribute__((unused)) void *pVoid) {
     httpUpdate.onStart(update_started);
     httpUpdate.onEnd(update_finished);
     httpUpdate.onProgress(update_progress);
     httpUpdate.onError(update_error);
     otaConfig.loadConfig();
-    while (true) {
+    while (otaConfig["enable"] == "1") {
         if (WiFiClass::getMode() == WIFI_STA and WiFiClass::status() == WL_CONNECTED and xSemaphoreTake(ApplicationController::http_xMutex, (TickType_t) 1000) == pdTRUE) {
             Serial.println("正在获取最新固件地址...");
             String actual_firmware_url = get_actual_firmware_url();
             if (actual_firmware_url.length() > 0) {
                 Serial.println("正在获取最新固件的md5...");
-                md5 = get_md5(actual_firmware_url);
-                Serial.printf("当前固件的md5:%s,新固件的md5:%s\n", otaConfig["md5"].c_str(), md5.c_str());
-                if (md5.length() > 0 and otaConfig["md5"] != md5) {
+                firmware_md5 = get_md5(actual_firmware_url);
+                Serial.printf("当前固件的md5:%s,新固件的md5:%s\n", otaConfig["firmware_md5"].c_str(), firmware_md5.c_str());
+                if (firmware_md5.length() > 0 and otaConfig["firmware_md5"] != firmware_md5) {
                     Serial.println("发现新固件,3秒后开始OTA更新");
                     vTaskDelay(3000 / portTICK_PERIOD_MS);
                     WiFiClientSecure wiFiClient;
@@ -84,9 +86,13 @@ String get_md5(const String &url) {
                 Serial.println("获取最新固件地址失败");
             }
             xSemaphoreGive(ApplicationController::http_xMutex);
+            if (firmware_md5 == otaConfig["firmware_md5"]) {
+                break;
+            }
             vTaskDelay(60000 / portTICK_PERIOD_MS);
         } else {
             vTaskDelay(1000 / portTICK_PERIOD_MS);
         }
     }
+    vTaskDelete(nullptr);
 }

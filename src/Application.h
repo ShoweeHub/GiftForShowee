@@ -81,7 +81,7 @@ private:
                 ScreenController::showFrame(temp_screen_frame, forceDisplayAppsScreen);
                 if (!forceDisplayAppsScreen) {
                     frame_index++;
-                    if (frame_index >= 50 * 30) {
+                    if (frame_index >= 50 * 15) {
                         frame_index = 0;
                         if (!apps.empty() and !inApp and !autoQueueLocked) {
                             onRightButtonPressed();

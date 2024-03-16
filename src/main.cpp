@@ -136,7 +136,7 @@ void ServerHandleConfig(Config &config) {
 }
 
 void startWebServer() {
-    std::vector<Config *> configs = {&baseConfig};
+    std::vector<Config *> configs = {&baseConfig, &otaConfig};
     for (auto app: ApplicationController::apps) {
         if (!app->config.items.empty()) {
             configs.push_back(&app->config);
