@@ -57,6 +57,7 @@ String get_md5(const String &url) {
     http.collectHeaders(headerKeys, headerKeysSize);
     http.GET();
     String etag = http.header("Etag");
+    etag.replace("\"", "");
     http.end();
     return etag;
 }
