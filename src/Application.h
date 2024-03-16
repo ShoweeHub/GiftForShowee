@@ -166,9 +166,9 @@ public:
 
     static void start() {
         for (auto app: apps) {
-            xTaskCreate(RunAppMainTask, app->config.alias.c_str(), 16384, app, app->priority, nullptr);
+            xTaskCreate(RunAppMainTask, app->config.alias.c_str(), 8192, app, app->priority, nullptr);
         }
-        xTaskCreate(showScreenFrame, "showScreenFrame", 16384, nullptr, 9, nullptr);
+        xTaskCreate(showScreenFrame, "showScreenFrame", 8192, nullptr, 9, nullptr);
     }
 };
 

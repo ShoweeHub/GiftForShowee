@@ -276,13 +276,13 @@ void setup() {
         reboot("LittleFS 故障");
     }
     ApplicationController::start();
-    xTaskCreate(listenButtonsPressed, "listenButtonsPressed", 16384, nullptr, 1, nullptr);
+    xTaskCreate(listenButtonsPressed, "listenButtonsPressed", 8192, nullptr, 1, nullptr);
     WiFi.onEvent(onWiFiEvent);
     if (!baseConfig.loadConfig() || !startSTA()) {
         startAP();
     }
     startWebServer();
-    xTaskCreate(checkAndUpdate, "checkAndUpdate", 16384, nullptr, 1, nullptr);
+    xTaskCreate(checkAndUpdate, "checkAndUpdate", 8192, nullptr, 1, nullptr);
 }
 
 void loop() {
