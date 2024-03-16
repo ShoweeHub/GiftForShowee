@@ -8,6 +8,7 @@
 #include <Application.h>
 #include <system_functions.h>
 #include <bilibiliFans.h>
+#include <weiboFans.h>
 #include <screenClock.h>
 #include <screenBrightnessController.h>
 #include <digitalRain.h>
@@ -24,6 +25,7 @@ Config baseConfig = Config("base", "基础", {
         ConfigItem("ap_password", "AP密码", "LoveShoweeForever", "空或8~64个英文字符", "^$|^[ -~]{8,64}$", false, false)
 });
 BilibiliFansApplication bilibiliFansApplication;
+WeiboFansApplication weiboFansApplication;
 ScreenClockApplication screenClockApplication;
 ScreenWeatherApplication screenWeatherApplication;
 ScreenBrightnessControllerApplication screenBrightnessControllerApplication;

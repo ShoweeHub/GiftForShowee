@@ -67,8 +67,10 @@ String get_md5(const String &url) {
     otaConfig.loadConfig();
     while (true) {
         if (WiFiClass::getMode() == WIFI_STA and WiFiClass::status() == WL_CONNECTED and xSemaphoreTake(ApplicationController::http_xMutex, (TickType_t) 1000) == pdTRUE) {
+            Serial.println("正在获取最新固件地址...");
             String actual_firmware_url = get_actual_firmware_url();
             if (actual_firmware_url.length() > 0) {
+                Serial.println("正在获取最新固件的md5...");
                 md5 = get_md5(actual_firmware_url);
                 Serial.printf("当前固件的md5:%s,新固件的md5:%s\n", otaConfig["md5"].c_str(), md5.c_str());
                 if (md5.length() > 0 and otaConfig["md5"] != md5) {
@@ -78,6 +80,8 @@ String get_md5(const String &url) {
                     wiFiClient.setInsecure();
                     httpUpdate.update(wiFiClient, actual_firmware_url);
                 }
+            } else {
+                Serial.println("获取最新固件地址失败");
             }
             xSemaphoreGive(ApplicationController::http_xMutex);
             vTaskDelay(60000 / portTICK_PERIOD_MS);
